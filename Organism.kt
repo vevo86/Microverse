@@ -12,7 +12,7 @@ data class Genome(
     var learning: Float
 ) {
     fun mutate(): Genome {
-        fun change(v: Float) = (v + (-0.12f..0.12f).random()).coerceIn(0.05f, 1f)
+    fun change(v: Float) = (v + (kotlin.random.Random.Default.nextFloat() * 0.24f - 0.12f)).coerceIn(0.05f, 1f)
         return Genome(change(speed), change(resilience), change(metabolism),
             change(aggression), change(sociability), change(learning))
     }
