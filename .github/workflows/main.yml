@@ -23,11 +23,12 @@ jobs:
       - name: Estrai progetto Android
         run: |
           mkdir -p extracted
-          ZIP_FILE=$(find . -type f -iname '*.zip' -not -path './extracted/*' -print -quit)
+
+          ZIP_FILE=$(find . -maxdepth 2 -type f -iname '*.zip' -print -quit)
 
           if [ -z "$ZIP_FILE" ]; then
-            echo "Nessun archivio ZIP trovato nel repository"
-            find . -maxdepth 3 -type f
+            echo "Archivio ZIP non trovato"
+            ls -la
             exit 1
           fi
 
@@ -38,13 +39,49 @@ jobs:
 
           if [ -z "$SETTINGS" ]; then
             echo "settings.gradle.kts non trovato"
-            find extracted -maxdepth 4 -type f
             exit 1
           fi
 
           PROJECT_DIR=$(dirname "$SETTINGS")
           cp -a "$PROJECT_DIR"/. .
-          test -d app
+
+          if [ ! -d app ]; then
+            echo "Cartella app non trovata"
+            find . -maxdepth 3 -type f
+            exit 1
+          fi
+
+      - name: Correggi versione Java e Kotlin
+        run: |
+          FILE="app/build.gradle.kts"
+
+          if [ ! -f "$FILE" ]; then
+            echo "build.gradle.kts non trovato"
+            exit 1
+          fi
+
+          if ! grep -q 'compileOptions' "$FILE"; then
+            sed -i '/^android[[:space:]]*{/a\
+              compileOptions {\
+                  sourceCompatibility = JavaVersion.VERSION_17\
+                  targetCompatibility = JavaVersion.VERSION_17\
+              }\
+          ' "$FILE"
+          fi
+
+          if ! grep -q 'kotlinOptions' "$FILE"; then
+            sed -i '/^android[[:space:]]*{/a\
+              kotlinOptions {\
+                  jvmTarget = "17"\
+              }\
+          ' "$FILE"
+          fi
+
+          sed -i 's/JavaVersion.VERSION_1_8/JavaVersion.VERSION_17/g' "$FILE"
+          sed -i 's/jvmTarget = "1.8"/jvmTarget = "17"/g' "$FILE"
+
+          echo "Configurazione Java/Kotlin:"
+          cat "$FILE"
 
       - name: Compila MICROVERSE
         run: gradle assembleDebug
