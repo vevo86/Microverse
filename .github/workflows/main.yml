@@ -22,23 +22,29 @@ jobs:
 
       - name: Estrai progetto Android
         run: |
-          sudo apt-get update
-          sudo apt-get install -y unzip
           mkdir -p extracted
-          ZIP_FILE=$(find . -maxdepth 1 -iname 'MICROVERSE-Android-0.2.zip' -print -quit)
+          ZIP_FILE=$(find . -type f -iname '*.zip' -not -path './extracted/*' -print -quit)
+
           if [ -z "$ZIP_FILE" ]; then
-            echo "Archivio MICROVERSE non trovato"
+            echo "Nessun archivio ZIP trovato nel repository"
+            find . -maxdepth 3 -type f
             exit 1
           fi
+
+          echo "Archivio trovato: $ZIP_FILE"
           unzip -q "$ZIP_FILE" -d extracted
+
           SETTINGS=$(find extracted -name settings.gradle.kts -print -quit)
+
           if [ -z "$SETTINGS" ]; then
-            echo "settings.gradle.kts non trovato nello ZIP"
+            echo "settings.gradle.kts non trovato"
+            find extracted -maxdepth 4 -type f
             exit 1
           fi
+
           PROJECT_DIR=$(dirname "$SETTINGS")
           cp -a "$PROJECT_DIR"/. .
-          test -d app || { echo "Cartella app non trovata"; exit 1; }
+          test -d app
 
       - name: Compila MICROVERSE
         run: gradle assembleDebug
