@@ -23,11 +23,11 @@ jobs:
       - name: Estrai progetto Android
         run: |
           mkdir -p extracted
-          ZIP_FILE=$(find . -maxdepth 2 -type f -iname '*.zip' -print -quit)
+          ZIP_FILE=$(find . -type f -iname '*.zip' -not -path './extracted/*' -print -quit)
 
           if [ -z "$ZIP_FILE" ]; then
-            echo "Archivio ZIP non trovato"
-            ls -la
+            echo "Nessun archivio ZIP trovato nel repository"
+            find . -maxdepth 3 -type f
             exit 1
           fi
 
@@ -38,6 +38,7 @@ jobs:
 
           if [ -z "$SETTINGS" ]; then
             echo "settings.gradle.kts non trovato"
+            find extracted -maxdepth 4 -type f
             exit 1
           fi
 
